@@ -32,7 +32,7 @@ const CircuitBuilder3D: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Sync palette when circuit changes
+  // Sync palette when circuit changes to provide immersive national branding
   useEffect(() => {
     const country = circuitToCountry[selectedCircuit]
     if (country && flagPalettes[country]) {
