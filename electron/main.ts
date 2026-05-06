@@ -29,7 +29,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
       contextIsolation: false, 
-      webSecurity: false, // Bypass CORS for external elevation APIs
+      webSecurity: false, // Required for fetching high-resolution SRTM data from open-source topography APIs
     },
     titleBarStyle: 'hidden',
     titleBarOverlay: {
