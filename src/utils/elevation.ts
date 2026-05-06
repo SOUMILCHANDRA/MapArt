@@ -31,7 +31,7 @@ export async function fetchElevation(points: [number, number][]): Promise<number
         await new Promise(resolve => setTimeout(resolve, 200))
       }
     } catch (error) {
-      console.error(`Failed to fetch elevation batch ${i}:`, error)
+      console.error(`[Topography] Failed to fetch batch ${i / batchSize + 1}:`, error)
       results.push(...batch.map(() => 0))
     }
   }
