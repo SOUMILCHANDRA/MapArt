@@ -397,6 +397,25 @@ const CircuitBuilder3D: React.FC = () => {
         
         {/* Floating Controls */}
         <div style={{ position: 'absolute', bottom: '30px', left: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="glass-panel" style={{ 
+            padding: '10px 20px', 
+            borderRadius: '12px',
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{ 
+              width: '8px', 
+              height: '8px', 
+              borderRadius: '50%', 
+              background: isLoading ? activePalette.accent : '#00ff00',
+              boxShadow: isLoading ? `0 0 10px ${activePalette.accent}` : '0 0 10px #00ff00'
+            }} />
+            <span style={{ fontSize: '12px', color: '#aaa', fontWeight: 600 }}>
+              {isLoading ? 'SYNCING TELEMETRY...' : 'CIRCUIT DATA LIVE'}
+            </span>
+          </div>
           <div className="glass-panel" style={{ padding: '20px', width: '260px' }}>
             <h4 className="f1-font" style={{ marginBottom: '15px', fontSize: '14px' }}>Flag Theme</h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
