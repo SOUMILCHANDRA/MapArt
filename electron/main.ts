@@ -28,7 +28,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
-      contextIsolation: false, // For simpler Vanilla/React logic as requested
+      contextIsolation: false, 
+      webSecurity: false, // Bypass CORS for external elevation APIs
     },
     titleBarStyle: 'hidden',
     titleBarOverlay: {
