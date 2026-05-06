@@ -169,8 +169,7 @@ const CircuitBuilder3D: React.FC = () => {
       (Math.min(...lats) + Math.max(...lats)) / 2
     ]
 
-    const scale = 80000 
-    const points: THREE.Vector3[] = []
+    const scale = 80000 // Optimized factor to map GPS degrees to visible Three.js world units
     
     // Defensive elevation calculation
     const validElevationData = elevationData.filter(e => typeof e === 'number' && !isNaN(e))
