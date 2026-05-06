@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# MapArt 🏎️🎨
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MapArt is a high-performance Windows desktop application designed for F1 enthusiasts to create cinematic circuit visualizations. Built with **Electron**, **MapLibre GL JS**, and **Three.js**, it bridges the gap between geographic data and artistic design.
 
-Currently, two official plugins are available:
+## 🌟 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### 🗺️ Map Art Generator
+- **Dynamic Stylization**: Load vector map tiles via MapLibre GL JS with a premium dark-noir aesthetic.
+- **Flag Theme Engine**: Automatically apply local country flag color palettes to road networks using an intelligent painting mode.
+- **Precision Cropping**: Interactive drag-rectangle tool to define exact export dimensions.
+- **Neon Overlays**: Customizable text blocks with draggable positioning and neon glow effects for a broadcast-style finish.
 
-## React Compiler
+### 🏔️ 3D Circuit Builder
+- **Elevation Modeling**: Generate 3D track ribbons based on real-world GeoJSON paths.
+- **Terrain Integration**: Automated elevation sampling via OpenTopoData API (SRTM) with local caching.
+- **Topographic Drama**: 5x exaggerated elevation scale for striking visual impact.
+- **Smart Annotations**: Automatic turn detection (Apex markers) and elevation grade indicators (>3%).
+- **Multi-Format Export**: High-resolution PNG renders and 3D GLB model exports.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+- **Framework**: Electron + React + Vite
+- **Graphics**: Three.js (3D) & MapLibre GL JS (Maps)
+- **Styling**: Vanilla CSS with Glassmorphism & Framer Motion
+- **Icons**: Lucide React
+- **Data**: OpenStreetMap (via OpenFreeMap) & OpenTopoData
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Installation
+```bash
+git clone https://github.com/SOUMILCHANDRA/MapArt.git
+cd MapArt
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Development
+```bash
+npm run dev
 ```
+
+### Building for Windows
+```bash
+npm run build
+```
+The installer will be generated in the `release/` directory.
+
+## 📄 License
+This project is for educational and creative purposes. F1 circuit data is sourced from open community repositories.
+
+---
+Created by **Soumil Chandra**
