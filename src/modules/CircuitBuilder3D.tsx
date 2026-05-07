@@ -491,3 +491,4 @@ export default CircuitBuilder3D
 // Build optimization pass 9
 // Build optimization pass 10
 // Build optimization pass 11
+// Build optimization pass 12
