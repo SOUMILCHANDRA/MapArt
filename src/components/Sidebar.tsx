@@ -1,5 +1,5 @@
 import React from 'react'
-import { Map, Box, Settings, Github } from 'lucide-react'
+import { Map, Box, Settings, Share } from 'lucide-react'
 
 interface SidebarProps {
   activeModule: string
@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       </div>
       
       <div className="sidebar-item" onClick={() => window.open('https://github.com/soumil-chandra', '_blank')}>
-        <Github size={24} />
+        <Share size={24} />
         <span>GitHub</span>
       </div>
     </nav>
