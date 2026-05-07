@@ -60,3 +60,8 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(createWindow)
+
+ipcMain.handle('fetch-proxy', async (_, url: string) => {
+  const response = await fetch(url)
+  return await response.json()
+})
