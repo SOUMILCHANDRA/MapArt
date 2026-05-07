@@ -167,3 +167,6 @@ A: Yes. Replace the MapLibre style URL in the renderer’s configuration (`src/m
 A: Cached SRTM data is saved in the user’s application data directory under `MapArt/cache/`.  
 
 ---
+
+
+-- Updated status overlay for 3D Builder debugging.
