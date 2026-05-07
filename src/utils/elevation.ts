@@ -17,8 +17,15 @@ export async function fetchElevation(points: [number, number][]): Promise<number
     const url = `https://api.opentopodata.org/v1/srtm30m?locations=${locations}`
 
     try {
-      const response = await fetch(url)
-      const data = await response.json()
+      let data;
+      // Use Electron proxy to bypass CORS if available
+      if ((window as any).electronAPI?.fetchProxy) {
+        data = await (window as any).electronAPI.fetchProxy(url)
+      } else {
+        const response = await fetch(url)
+        data = await response.json()
+      }
+      
       if (data.results) {
         // Sanitize: fallback to 0 if elevation is null/undefined/NaN
         results.push(...data.results.map((r: any) => (typeof r.elevation === 'number' && !isNaN(r.elevation)) ? r.elevation : 0))
