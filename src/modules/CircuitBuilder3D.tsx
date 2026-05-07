@@ -60,6 +60,7 @@ const CircuitBuilder3D: React.FC = () => {
 
     try {
       const data = circuits[selectedCircuit]
+      if (!data) return
       const coords = data.features[0].geometry.coordinates as [number, number][]
       const elevations = await fetchElevation(coords)
       localStorage.setItem(cacheKey, JSON.stringify(elevations))
@@ -87,7 +88,7 @@ const CircuitBuilder3D: React.FC = () => {
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       45,
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      containerRef.current.clientWidth / (containerRef.current.clientHeight || window.innerHeight),
       0.1,
       10000
     )
@@ -96,7 +97,7 @@ const CircuitBuilder3D: React.FC = () => {
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
+    renderer.setSize(containerRef.current.clientWidth || window.innerWidth, containerRef.current.clientHeight || window.innerHeight)
     renderer.setPixelRatio(window.devicePixelRatio)
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
@@ -120,6 +121,20 @@ const CircuitBuilder3D: React.FC = () => {
 
     // Animation loop
     let frameId: number
+    const handleResize = () => {
+      if (!containerRef.current) return
+      const width = containerRef.current.clientWidth
+      const height = containerRef.current.clientHeight || window.innerHeight
+      if (width && height) {
+        camera.aspect = width / height
+        camera.updateProjectionMatrix()
+        renderer.setSize(width, height)
+      }
+    }
+
+    const resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver.observe(containerRef.current)
+
     const animate = () => {
       frameId = requestAnimationFrame(animate)
       controls.update()
@@ -127,18 +142,9 @@ const CircuitBuilder3D: React.FC = () => {
     }
     animate()
 
-    // Resize handler
-    const handleResize = () => {
-      if (!containerRef.current || !camera || !renderer) return
-      camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight)
-    }
-    window.addEventListener('resize', handleResize)
-
     return () => {
       cancelAnimationFrame(frameId)
-      window.removeEventListener('resize', handleResize)
+      resizeObserver.disconnect()
       if (containerRef.current && renderer.domElement) {
         containerRef.current.removeChild(renderer.domElement)
       }
@@ -208,6 +214,14 @@ const CircuitBuilder3D: React.FC = () => {
     const track = new THREE.Mesh(geometry, material)
     track.name = 'circuitMesh'
     scene.add(track)
+
+    // Debug Cube
+    const debugBox = new THREE.Mesh(
+      new THREE.BoxGeometry(20, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    )
+    debugBox.position.set(0, 10, 0)
+    scene.add(debugBox)
 
     // Ensure there is at least one light if children was cleared too aggressively
     if (!scene.children.some(c => c instanceof THREE.Light)) {
@@ -355,6 +369,16 @@ const CircuitBuilder3D: React.FC = () => {
       <div style={{ flex: 1, position: 'relative' }}>
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
         
+        <div style={{ position: 'absolute', bottom: '20px', left: '20px', pointerEvents: 'none' }}>
+          <div className="glass-panel" style={{ padding: '15px', fontSize: '12px', color: '#888', borderLeft: `4px solid ${activePalette.primary}` }}>
+            <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '5px' }}>SYSTEM STATUS</div>
+            <div>Circuit: <span style={{ color: '#fff' }}>{selectedCircuit}</span></div>
+            <div>Topography: <span style={{ color: isLoading ? '#ff1801' : '#00ff00' }}>{isLoading ? 'SAMPLING...' : 'LOCKED'}</span></div>
+            <div>Data Points: <span style={{ color: '#fff' }}>{elevationData.length}</span></div>
+            <div>Renderer: <span style={{ color: '#00ff00' }}>ACTIVE</span></div>
+          </div>
+        </div>
+
         {isLoading && (
           <div style={{ 
             position: 'absolute', 
