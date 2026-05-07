@@ -10,7 +10,7 @@ function App() {
     <>
       <div className="title-bar-drag" />
       <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
-      <main className="main-content">
+      <main className="main-content" style={{ height: '100vh' }}>
         {activeModule === 'map' ? <MapGenerator /> : <CircuitBuilder3D />}
       </main>
     </>
