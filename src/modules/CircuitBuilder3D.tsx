@@ -90,7 +90,7 @@ const CircuitBuilder3D: React.FC = () => {
       0.1,
       10000
     )
-    camera.position.set(200, 200, 200)
+    camera.position.set(500, 500, 500)
     cameraRef.current = camera
 
     // Renderer setup
@@ -145,9 +145,10 @@ const CircuitBuilder3D: React.FC = () => {
     if (sceneRef.current && !isLoading) {
       buildTrack(sceneRef.current)
     }
-  }, [elevationData, activePalette, isLoading])
+  }, [elevationData, activePalette, isLoading, selectedCircuit])
 
   const buildTrack = (scene: THREE.Scene) => {
+    const points: THREE.Vector3[] = []
     try {
       // Correct cleanup: remove only mesh/group objects, keep lights
       const toRemove: THREE.Object3D[] = []
@@ -161,6 +162,8 @@ const CircuitBuilder3D: React.FC = () => {
     const data = circuits[selectedCircuit]
     const coords = data.features[0].geometry.coordinates as [number, number][]
     
+    if (!coords || coords.length === 0) return
+
     // Center the track perfectly using bounding box
     const lats = coords.map(p => p[1])
     const lngs = coords.map(p => p[0])
@@ -188,7 +191,7 @@ const CircuitBuilder3D: React.FC = () => {
 
     const curve = new THREE.CatmullRomCurve3(points)
     curve.closed = true
-    const geometry = new THREE.TubeGeometry(curve, Math.max(100, points.length * 2), 5, 12, true)
+    const geometry = new THREE.TubeGeometry(curve, Math.max(100, points.length * 2), 8, 16, true)
     const material = new THREE.MeshPhongMaterial({ 
       color: activePalette.primary,
       shininess: 100,
@@ -300,7 +303,7 @@ const CircuitBuilder3D: React.FC = () => {
 
   const resetView = () => {
     if (cameraRef.current && controlsRef.current) {
-      cameraRef.current.position.set(200, 200, 200)
+      cameraRef.current.position.set(500, 500, 500)
       controlsRef.current.target.set(0, 0, 0)
       controlsRef.current.update()
     }
