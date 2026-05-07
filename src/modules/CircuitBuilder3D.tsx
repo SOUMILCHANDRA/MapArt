@@ -80,7 +80,8 @@ const CircuitBuilder3D: React.FC = () => {
 
     // Scene setup
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x0a0a0a)
+    scene.background = new THREE.Color(0x050505)
+    scene.fog = new THREE.FogExp2(0x050505, 0.001)
     sceneRef.current = scene
 
     // Camera setup
@@ -103,6 +104,10 @@ const CircuitBuilder3D: React.FC = () => {
     // Controls
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
+    controls.enableDamping = true
+    controls.dampingFactor = 0.05
+    controls.screenSpacePanning = false
+    controls.maxPolarAngle = Math.PI / 2
     controlsRef.current = controls
 
     // Lighting
@@ -148,7 +153,7 @@ const CircuitBuilder3D: React.FC = () => {
   }, [elevationData, activePalette, isLoading, selectedCircuit])
 
   const buildTrack = (scene: THREE.Scene) => {
-    const points: THREE.Vector3[] = []
+    const trackPoints: THREE.Vector3[] = []
     try {
       // Correct cleanup: remove only mesh/group objects, keep lights
       const toRemove: THREE.Object3D[] = []
@@ -186,14 +191,16 @@ const CircuitBuilder3D: React.FC = () => {
       const elev = (typeof rawElev === 'number' && !isNaN(rawElev)) ? rawElev : 0
       const y = (elev - minElev) * 5
       
-      points.push(new THREE.Vector3(x, y, z))
+      trackPoints.push(new THREE.Vector3(x, y, z))
     })
 
-    const curve = new THREE.CatmullRomCurve3(points)
+    const curve = new THREE.CatmullRomCurve3(trackPoints)
     curve.closed = true
-    const geometry = new THREE.TubeGeometry(curve, Math.max(100, points.length * 2), 8, 16, true)
+    const geometry = new THREE.TubeGeometry(curve, Math.max(100, trackPoints.length * 2), 8, 16, true)
     const material = new THREE.MeshPhongMaterial({ 
       color: activePalette.primary,
+      emissive: activePalette.primary,
+      emissiveIntensity: 0.5,
       shininess: 100,
       specular: 0x444444
     })
@@ -212,10 +219,10 @@ const CircuitBuilder3D: React.FC = () => {
 
     // Turn Detection & Labels
     const threshold = 0.2 
-    for (let i = 1; i < points.length - 1; i++) {
-      const pPrev = points[i-1]
-      const pCurr = points[i]
-      const pNext = points[i+1]
+    for (let i = 1; i < trackPoints.length - 1; i++) {
+      const pPrev = trackPoints[i-1]
+      const pCurr = trackPoints[i]
+      const pNext = trackPoints[i+1]
 
       if (!pPrev || !pCurr || !pNext) continue
 
