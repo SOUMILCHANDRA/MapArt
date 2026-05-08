@@ -136,5 +136,23 @@
     "secondary": "#FFFFFF",
     "accent": "#FF0000",
     "background": "#000000"
+  },
+  "Germany": {
+    "primary": "#FFCE00",
+    "secondary": "#DD0000",
+    "accent": "#000000",
+    "background": "#000000"
+  },
+  "South Africa": {
+    "primary": "#007A4D",
+    "secondary": "#FFFFFF",
+    "accent": "#E03C31",
+    "background": "#000000"
+  },
+  "Malaysia": {
+    "primary": "#012169",
+    "secondary": "#FFFFFF",
+    "accent": "#CC0000",
+    "background": "#000000"
   }
 }
