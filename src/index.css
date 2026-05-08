@@ -1,19 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;900&family=Outfit:wght@100;300;400;500;700;900&display=swap');
 
 :root {
-  --bg-dark: #0a0a0a;
-  --bg-sidebar: #121212;
+  --bg-dark: #020202;
+  --bg-sidebar: #080808;
   --accent-f1: #ff1801;
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-secondary: #666666;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --sidebar-width: 80px;
+  --sidebar-width-expanded: 240px;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -28,62 +32,93 @@ body {
 h1, h2, h3, .f1-font {
   font-family: 'Outfit', sans-serif;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 0.1em;
 }
 
 #root {
   display: flex;
   height: 100vh;
   width: 100vw;
+  background: radial-gradient(circle at 50% 50%, #0a0a0a 0%, #000000 100%);
 }
 
 .sidebar {
-  width: 80px;
+  width: var(--sidebar-width);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0;
+  padding: 30px 0;
   z-index: 100;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
 .sidebar:hover {
-  width: 240px;
+  width: var(--sidebar-width-expanded);
+}
+
+.sidebar-logo {
+  margin-bottom: 50px;
+  transition: transform 0.3s ease;
+}
+
+.sidebar:hover .sidebar-logo {
+  transform: scale(1.1);
 }
 
 .sidebar-item {
   width: 100%;
-  padding: 15px 0;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.sidebar-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .sidebar-item.active {
-  color: var(--accent-f1);
+  color: #fff;
+}
+
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 3px;
+  background: var(--accent-f1);
+  box-shadow: 0 0 15px var(--accent-f1);
+  border-radius: 0 4px 4px 0;
 }
 
 .sidebar-item span {
-  display: none;
-  margin-left: 15px;
+  position: absolute;
+  left: 70px;
+  opacity: 0;
   font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   white-space: nowrap;
-}
-
-.sidebar:hover .sidebar-item {
-  justify-content: flex-start;
-  padding-left: 25px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateX(-10px);
 }
 
 .sidebar:hover .sidebar-item span {
-  display: block;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .main-content {
@@ -92,39 +127,53 @@ h1, h2, h3, .f1-font {
   overflow: hidden;
 }
 
-.neon-glow {
-  text-shadow: 0 0 10px var(--accent-f1), 0 0 20px var(--accent-f1);
-}
-
 .glass-panel {
   background: var(--glass);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* Scrollbar */
+.neon-border {
+  border-color: var(--accent-f1);
+  box-shadow: 0 0 15px rgba(255, 24, 1, 0.2);
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.animate-pulse-slow {
+  animation: pulse 4s infinite ease-in-out;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+  background: #1a1a1a;
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: #2a2a2a;
 }
 
-/* Draggable title bar for Electron */
+/* Electron Draggable Area */
 .title-bar-drag {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 32px;
+  height: 40px;
   -webkit-app-region: drag;
   z-index: 9999;
   pointer-events: none;
