@@ -4,13 +4,13 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import html2canvas from 'html2canvas'
 import flagPalettes from '../assets/data/flag-palettes.json'
 import { circuits } from '../assets/data/CircuitRegistry'
-import { ALL_F1_TRACKS, TRACK_SLUGS } from '../assets/data/TrackList'
-import { Search, Crop, Download, Zap, Map as MapIcon, X, ChevronRight, History, Loader2 } from 'lucide-react'
+import { ALL_F1_TRACKS, TRACK_SLUGS, CIRCUIT_COORDINATES, TRACK_TO_COUNTRY } from '../assets/data/TrackList'
+import { Search, Crop, Download, Zap, Map as MapIcon, X, ChevronRight, History, Loader2, Info } from 'lucide-react'
 
 const MapGenerator: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
-  const [selectedTrack, setSelectedTrack] = useState('Monza')
+  const [selectedTrack, setSelectedTrack] = useState('Autodromo Nazionale Monza')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isLocating, setIsLocating] = useState(false)
@@ -19,38 +19,65 @@ const MapGenerator: React.FC = () => {
     return ALL_F1_TRACKS.filter(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
   }, [searchQuery])
 
-  // SMART RESOLVER: GitHub -> Registry -> Nominatim Geocoder
-  const resolveTrackLocation = async (trackName: string) => {
-    const slug = TRACK_SLUGS[trackName]
+  // DYNAMIC TRACER: Registry -> GitHub -> OSM Overpass -> Nominatim
+  const resolveTrackData = async (trackName: string) => {
+    // 1. Check Priority Coordinate Registry (Ensures correct city/continent)
+    const priorityCenter = CIRCUIT_COORDINATES[trackName]
     
-    // Try GitHub first for precise racing line
+    const slug = TRACK_SLUGS[trackName]
+    let geojsonData = null
+
+    // 2. Try Primary GitHub Library (High Res)
     if (slug) {
       try {
         const response = await fetch(`https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${slug}.geojson`)
         if (response.ok) {
-          const data = await response.json()
-          if (data.features?.length > 0) {
-            const geom = data.features[0].geometry
-            let center: [number, number] = [0, 0]
-            if (geom.type === 'Polygon') center = geom.coordinates[0][0]
-            else if (geom.type === 'LineString') center = geom.coordinates[0]
-            else if (geom.type === 'MultiLineString') center = geom.coordinates[0][0]
-            return { center, data }
-          }
+          geojsonData = await response.json()
         }
       } catch (e) { console.warn('GitHub fetch failed') }
     }
 
-    // Fallback: Geocode using Nominatim
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trackName)}`)
-      const json = await response.json()
-      if (json.length > 0) {
-        return { center: [parseFloat(json[0].lon), parseFloat(json[0].lat)], data: null }
-      }
-    } catch (e) { console.warn('Geocoding failed') }
+    // 3. Try OSM Overpass API (Live Trace)
+    if (!geojsonData) {
+      try {
+        const query = `[out:json];way["leisure"="track"]["sport"="motor_racing"]["name"~"${trackName.split(' ')[0]}",i];(._;>;);out;`;
+        const osmResponse = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+        const osmData = await osmResponse.json()
+        
+        if (osmData.elements.length > 0) {
+          const nodes: Record<number, [number, number]> = {}
+          osmData.elements.filter((e: any) => e.type === 'node').forEach((n: any) => {
+            nodes[n.id] = [n.lon, n.lat]
+          })
+          const way = osmData.elements.find((e: any) => e.type === 'way')
+          if (way && way.nodes) {
+            const coordinates = way.nodes.map((id: number) => nodes[id]).filter(Boolean)
+            geojsonData = {
+              type: 'FeatureCollection',
+              features: [{
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates },
+                properties: { name: trackName }
+              }]
+            }
+          }
+        }
+      } catch (e) { console.warn('OSM Trace failed') }
+    }
 
-    return null
+    // 4. Fallback Geocoder if no priority center
+    let finalCenter = priorityCenter
+    if (!finalCenter) {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trackName)}`)
+        const json = await response.json()
+        if (json.length > 0) {
+          finalCenter = [parseFloat(json[0].lon), parseFloat(json[0].lat)]
+        }
+      } catch (e) { console.warn('Geocoding failed') }
+    }
+
+    return { center: finalCenter, data: geojsonData }
   }
 
   useEffect(() => {
@@ -98,21 +125,24 @@ const MapGenerator: React.FC = () => {
       if (!map.current) return
       setIsLocating(true)
       
-      const result = await resolveTrackLocation(selectedTrack)
+      const result = await resolveTrackData(selectedTrack)
       
-      if (result) {
-        // Update track line if available
-        const source = map.current.getSource('circuit-path') as maplibregl.GeoJSONSource
-        if (source) {
-          source.setData(result.data || { type: 'FeatureCollection', features: [] })
-        }
-        
-        // Fly to location
+      const source = map.current.getSource('circuit-path') as maplibregl.GeoJSONSource
+      if (source) {
+        source.setData(result.data || { type: 'FeatureCollection', features: [] })
+      }
+      
+      let flyCenter = result.center
+      if (!flyCenter && result.data) {
+        const geom = result.data.features[0].geometry
+        flyCenter = geom.type === 'Polygon' ? geom.coordinates[0][0] : geom.coordinates[0]
+      }
+
+      if (flyCenter) {
         map.current.flyTo({ 
-          center: result.center as [number, number], 
-          zoom: 14.5, 
-          speed: 1.2,
-          curve: 1.4,
+          center: flyCenter as [number, number], 
+          zoom: 14.8, 
+          speed: 1.5,
           essential: true 
         })
       }
@@ -145,12 +175,16 @@ const MapGenerator: React.FC = () => {
             className="glass-panel" 
             style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 20px', color: '#888', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            <Search size={16} /> <span style={{ fontSize: '12px' }}>Search 80+ Circuits... (Ctrl+K)</span>
+            <Search size={16} /> <span style={{ fontSize: '12px' }}>Search 80+ F1 Circuits... (Ctrl+K)</span>
           </button>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {isLocating && <Loader2 size={18} className="animate-spin" style={{ color: '#ff1801' }} />}
+          {isLocating && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ff1801', fontSize: '10px', fontWeight: 'bold' }}>
+              <Loader2 size={14} className="animate-spin" /> TRACING TRACK...
+            </div>
+          )}
           <button onClick={exportPoster} className="glass-panel" style={{ padding: '10px 25px', background: '#ff1801', border: 'none', color: '#000', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
             DOWNLOAD POSTER
           </button>
@@ -160,13 +194,15 @@ const MapGenerator: React.FC = () => {
       <div id="poster-canvas" style={{ flex: 1, position: 'relative' }}>
         <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
         
-        <div style={{ position: 'absolute', bottom: '10%', width: '100%', textAlign: 'center', pointerEvents: 'none' }}>
-          <h1 className="f1-font" style={{ fontSize: '100px', color: '#ff1801', margin: 0, textShadow: '0 0 30px rgba(255,24,1,0.3)' }}>
+        <div style={{ position: 'absolute', bottom: '8%', width: '100%', textAlign: 'center', pointerEvents: 'none' }}>
+          <h1 className="f1-font" style={{ fontSize: '90px', color: '#ff1801', margin: 0, textShadow: '0 0 30px rgba(255,24,1,0.3)', lineHeight: 1.1 }}>
             {selectedTrack.toUpperCase()}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
              <div style={{ height: '1px', width: '40px', background: 'rgba(255,255,255,0.1)' }} />
-             <p style={{ letterSpacing: '10px', fontSize: '14px', color: '#fff', opacity: 0.6, margin: 0 }}>F1 HISTORICAL • 2026 EDITION</p>
+             <p style={{ letterSpacing: '10px', fontSize: '12px', color: '#fff', opacity: 0.6, margin: 0 }}>
+               {TRACK_TO_COUNTRY[selectedTrack] ? TRACK_TO_COUNTRY[selectedTrack].toUpperCase() : 'HISTORICAL CIRCUIT'} • 2026 EDITION
+             </p>
              <div style={{ height: '1px', width: '40px', background: 'rgba(255,255,255,0.1)' }} />
           </div>
         </div>
@@ -179,7 +215,7 @@ const MapGenerator: React.FC = () => {
               <Search size={20} style={{ color: '#ff1801' }} />
               <input 
                 autoFocus
-                placeholder="Search F1 Circuits (e.g. Adelaide, Kyalami, Monaco)..."
+                placeholder="Search Adelaide, Kyalami, Fuji, etc..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '18px', outline: 'none' }}
@@ -193,7 +229,7 @@ const MapGenerator: React.FC = () => {
                   key={track}
                   onClick={() => { setSelectedTrack(track); setIsSearchOpen(false); }}
                   style={{ 
-                    padding: '15px 20px', 
+                    padding: '12px 20px', 
                     borderRadius: '8px', 
                     cursor: 'pointer',
                     background: selectedTrack === track ? 'rgba(255,24,1,0.1)' : 'transparent',
@@ -203,8 +239,11 @@ const MapGenerator: React.FC = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <span style={{ color: selectedTrack === track ? '#ff1801' : '#fff', fontWeight: 'bold' }}>{track}</span>
-                  <ChevronRight size={16} style={{ color: '#333' }} />
+                  <div>
+                    <div style={{ color: selectedTrack === track ? '#ff1801' : '#fff', fontWeight: 'bold', fontSize: '14px' }}>{track}</div>
+                    <div style={{ fontSize: '10px', color: '#444' }}>{TRACK_TO_COUNTRY[track] || 'HISTORICAL'}</div>
+                  </div>
+                  <ChevronRight size={16} style={{ color: '#222' }} />
                 </div>
               ))}
             </div>
